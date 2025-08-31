@@ -142,3 +142,56 @@ curl -X POST http://localhost:3000/pedidos \
 
 * Desenvolvido em dupla para o **G1 de Arquitetura**.
 * Brayan Martins & Carlos Daniel Martins
+
+---
+
+## 📑 Perguntas Frequentes (Q\&A)
+
+### 🔹 Por que Node.js + Express?
+
+Usei **Node.js com Express** porque é simples, rápido de configurar e bastante popular para APIs REST.
+Além disso, facilita a organização em **rotas e controllers**, deixando o código mais limpo e escalável.
+
+### 🔹 Por que PostgreSQL?
+
+Escolhi **PostgreSQL** por ser um banco **relacional robusto**, open-source e confiável.
+Ele dá suporte a **relacionamentos e tipos avançados** (como Decimal), essenciais para dados financeiros de produtos e pedidos.
+
+### 🔹 Por que Prisma ORM?
+
+O **Prisma ORM** facilita o desenvolvimento e aumenta a produtividade:
+
+* Cria e aplica migrations automaticamente.
+* Gera um **Client tipado** que dá segurança nas queries.
+* Ajuda a evitar problemas como **SQL injection**.
+
+### 🔹 Por que Docker Compose?
+
+Usei **Docker Compose** para subir a aplicação com um único comando:
+
+```bash
+docker compose up -d
+```
+
+Isso garante que tanto a API quanto o banco rodem em qualquer ambiente, de forma padronizada e isolada.
+
+### 🔹 Por que Swagger?
+
+Implementei **Swagger/OpenAPI** para gerar **documentação interativa** da API.
+Isso facilita os testes dos endpoints em sala e deixa o projeto mais profissional.
+
+### 🔹 Estrutura em rotas e controllers
+
+Separei o código em **controllers** e **rotas** para:
+
+* Manter a lógica de negócio separada da definição de rotas.
+* Facilitar manutenção e futuras expansões (ex.: adicionar usuários ou pagamentos).
+
+### 🔹 Uso de Decimal no banco
+
+Para valores monetários (preço, total do pedido) utilizei **Decimal** em vez de float/double.
+Assim, evito problemas de arredondamento e mantenho precisão nos cálculos financeiros.
+
+---
+
+👉 Esse Q\&A explica minhas principais escolhas técnicas no projeto.
