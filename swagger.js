@@ -141,6 +141,18 @@ const swaggerOptions = {
             400: { description: 'Validation error', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
             404: { description: 'Not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
           }
+        },
+        delete: {
+          summary: 'Delete a product',
+          tags: ['Products'],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+          responses: {
+            204: { description: 'Deleted' },
+            404: {
+              description: 'Not found',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
+            }
+          }
         }
       },
       '/orders': {
@@ -167,7 +179,21 @@ const swaggerOptions = {
           },
           responses: {
             201: { description: 'Created', content: { 'application/json': { schema: { $ref: '#/components/schemas/Order' } } } },
-            400: { description: 'Insufficient stock or invalid payload', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
+            400: {
+              description: 'Insufficient stock or invalid payload',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
+            }
+          }
+        }
+      },
+      '/orders/{id}': {
+        get: {
+          summary: 'Get order by ID',
+          tags: ['Orders'],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+          responses: {
+            200: { description: 'OK', content: { 'application/json': { schema: { $ref: '#/components/schemas/Order' } } } },
+            404: { description: 'Not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
           }
         }
       }

@@ -1,36 +1,36 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  postgres-db:
-    image: postgres:15
-    container_name: postgres_container
-    restart: always
+  db:
+    image: postgres:16
+    container_name: g1_db
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ecommerce
-      POSTGRES_PASSWORD: naouseadmin
-      # POSTGRES_USER: usuario_postgres
-      # POSTGRES_DB: senha_postgres
+      POSTGRES_USER: g1
+      POSTGRES_PASSWORD: g1pass
+      POSTGRES_DB: g1db
     ports:
       - "5432:5432"
     volumes:
-      - postgres_db_data:/var/lib/postgresql/data
+      - pgdata_g1:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U g1 -d g1db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin4_container
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+  api:
+    build: .
+    container_name: g1_api
+    restart: unless-stopped
     depends_on:
-      - postgres-db
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://g1:g1pass@db:5432/g1db?schema=public
+      PORT: 3000
+    ports:
+      - "3000:3000"
 
 volumes:
-  postgres_db_data:
-    driver: local
-  pgadmin_data:
-    driver: local
+  pgdata_g1:
