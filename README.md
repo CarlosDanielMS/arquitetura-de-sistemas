@@ -1,102 +1,137 @@
-# 🛒 G1 E-commerce API
+# G1 Arquitetura — E-commerce API
 
-API simples de e-commerce construída em **Node.js + Express**, com **Swagger (OpenAPI)** e armazenamento **em memória**. Desenvolvida para fins acadêmicos (G1 de Arquitetura).
-
----
-
-## 🚀 Tecnologias utilizadas
-
-* [Node.js](https://nodejs.org/)
-* [Express](https://expressjs.com/)
-* [Swagger UI](https://swagger.io/tools/swagger-ui/)
-* [swagger-jsdoc](https://www.npmjs.com/package/swagger-jsdoc)
+API em **Node.js + Express**, com **PostgreSQL** e **Prisma ORM**, rodando via **Docker Compose**.
 
 ---
 
-## 📂 Estrutura do projeto
+## 🚀 Tecnologias
+
+* Node.js 20 (Debian)
+* Express.js
+* Prisma ORM 5.22.0
+* PostgreSQL 16
+* Swagger (documentação automática)
+* Docker / Docker Compose
+
+---
+
+## 📂 Estrutura do Projeto
 
 ```
-g1_arquitetura/
-├─ index.js                # Bootstrap da aplicação
-├─ swagger.js              # Configuração do Swagger
-├─ src/
-│  ├─ data/
-│  │  └─ store.js          # "Banco de dados" em memória + helpers
-│  ├─ controllers/
-│  │  ├─ productsController.js  # Lógica de Produtos
-│  │  └─ ordersController.js    # Lógica de Pedidos
-│  └─ routes/
-│     ├─ productsRoutes.js      # Rotas de Produtos
-│     └─ ordersRoutes.js        # Rotas de Pedidos
+├── index.js              # App Express
+├── swagger.js            # Configuração Swagger
+├── prisma/
+│   ├── schema.prisma     # Modelo do banco (Prisma)
+│   ├── migrations/       # Histórico de migrations
+│   └── seed.js           # Script de seed inicial
+├── src/
+│   ├── controllers/      # Controllers (Products, Orders)
+│   ├── routes/           # Rotas Express
+│   └── data/             # (versão inicial em memória)
+├── Dockerfile
+├── docker-compose.yml
+├── package.json
+└── README.md
 ```
 
 ---
 
-## ⚙️ Instalação e execução
+## 🐳 Subindo o Projeto
+
+### 1. Build + start
 
 ```bash
-# 1. Clonar o repositório
-git clone <url-do-seu-repo>
-cd g1_arquitetura
+docker compose up --build -d
+```
 
-# 2. Instalar dependências
-npm install
+### 2. Criar tabelas e seed inicial
 
-# 3. Rodar o servidor
-node index.js
+```bash
+docker compose run --rm api sh -lc "npx prisma migrate dev --name init && npm run prisma:seed"
+```
 
-# 4. Acessar a API
-http://localhost:3000
+### 3. Ver status
+
+```bash
+docker compose ps
+```
+
+### 4. Acessar a API
+
+* Produtos: [http://localhost:3000/produtos](http://localhost:3000/produtos)
+* Pedidos: [http://localhost:3000/pedidos](http://localhost:3000/pedidos)
+* Swagger Docs: [http://localhost:3000/docs](http://localhost:3000/docs)
+
+---
+
+## 📦 Endpoints
+
+### Produtos
+
+* **GET** `/produtos` → lista produtos
+* **GET** `/produtos/:id` → busca por ID
+* **POST** `/produtos` → cria produto
+
+  ```json
+  {
+    "name": "Monitor Gamer",
+    "price": 1299.90,
+    "stock": 15
+  }
+  ```
+* **PUT** `/produtos/:id` → atualiza produto
+* **DELETE** `/produtos/:id` → deleta produto
+
+### Pedidos
+
+* **GET** `/pedidos` → lista pedidos
+* **GET** `/pedidos/:id` → busca pedido
+* **POST** `/pedidos` → cria pedido (checa/decrementa estoque)
+
+  ```json
+  {
+    "items": [
+      { "productId": 1, "quantity": 2 },
+      { "productId": 2, "quantity": 1 }
+    ]
+  }
+  ```
+
+---
+
+## 🗄️ Banco de Dados
+
+* **Host:** `localhost`
+* **Port:** `5432`
+* **DB:** `g1db`
+* **User:** `g1`
+* **Password:** `g1pass`
+
+### Comandos úteis
+
+```bash
+# acessar via psql
+docker compose exec db psql -U g1 -d g1db
+
+# listar tabelas
+\dt
+
+# resetar banco (migrations + seed)
+docker compose run --rm api sh -lc "npx prisma migrate reset --force && npm run prisma:seed"
 ```
 
 ---
 
-## 📖 Documentação Swagger
-
-* **Interface interativa:** [http://localhost:3000/docs](http://localhost:3000/docs)
-* **Spec JSON:** [http://localhost:3000/api-docs.json](http://localhost:3000/api-docs.json)
-
----
-
-## 📌 Endpoints principais
-
-### 🔹 Produtos
-
-* `GET /produtos` → Lista todos os produtos.
-* `GET /produtos/:id` → Busca um produto por ID.
-* `POST /produtos` → Cria um novo produto.
-* `PUT /produtos/:id` → Atualiza um produto existente (parcial).
-
-### 🔹 Pedidos
-
-* `GET /pedidos` → Lista todos os pedidos.
-* `POST /pedidos` → Cria um novo pedido (verifica estoque e decrementa).
-
----
-
-## 🧪 Exemplos de uso com cURL
-
-### Criar produto
+## 🧪 Testes rápidos (curl)
 
 ```bash
+# criar produto
 curl -X POST http://localhost:3000/produtos \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Headset","price":199.9,"stock":5}'
-```
+ -H "Content-Type: application/json" \
+ -d '{"name":"Headset","price":199.90,"stock":5}'
 
-### Criar pedido
-
-```bash
+# criar pedido
 curl -X POST http://localhost:3000/pedidos \
-  -H "Content-Type: application/json" \
-  -d '{"items":[{"productId":1,"quantity":2},{"productId":2,"quantity":1}]}'
+ -H "Content-Type: application/json" \
+ -d '{"items":[{"productId":1,"quantity":1}]}'
 ```
-
----
-
-## 👨‍💻 Equipe
-
-* Desenvolvido em dupla para o **G1 de Arquitetura**.
-* Brayan Martins & Carlos Daniel Martins
-
----
