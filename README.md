@@ -56,7 +56,7 @@ docker compose run --rm api sh -lc "npx prisma migrate dev --name init && npm ru
 docker compose ps
 ```
 
-### 4. Acessar a API
+### 4. Acessar API
 
 * Produtos: [http://localhost:3000/produtos](http://localhost:3000/produtos)
 * Pedidos: [http://localhost:3000/pedidos](http://localhost:3000/pedidos)
