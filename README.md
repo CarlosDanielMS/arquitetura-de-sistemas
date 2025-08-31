@@ -194,4 +194,4 @@ Assim, evito problemas de arredondamento e mantenho precisão nos cálculos fina
 
 ---
 
-👉 Esse Q\&A explica minhas principais escolhas técnicas no projeto.
+👉 Esse Q\&A explica nossas principais escolhas técnicas no projeto.
