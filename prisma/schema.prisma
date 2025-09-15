@@ -7,23 +7,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Product {
-  id     Int      @id @default(autoincrement()) @map("id")
-  name   String   @map("name")
-  price  Decimal  @db.Decimal(12, 2) @map("price")
-  stock  Int      @default(0) @map("stock")
+model Customer {
+  id     Int     @id @default(autoincrement())
+  name   String
+  email  String  @unique
+  orders Order[]
 
+  @@map("customers")
+}
+
+model Product {
+  id            Int            @id @default(autoincrement()) @map("id")
+  name          String         @map("name")
+  price         Decimal        @db.Decimal(12, 2) @map("price")
+  stock         Int            @default(0) @map("stock")
   orderProducts OrderProduct[]
 
   @@map("products")
+}
+
+enum OrderStatus {
+  AGUARDANDO_PAGAMENTO
+  PAGO
+  FALHA_NO_PAGAMENTO
+  CANCELADO
 }
 
 model Order {
   id         Int           @id @default(autoincrement()) @map("id")
   date       DateTime      @default(now()) @map("date")
   totalValue Decimal       @db.Decimal(12, 2) @map("total_value")
-
+  status     OrderStatus   @default(AGUARDANDO_PAGAMENTO)
+  customerId Int
+  customer   Customer      @relation(fields: [customerId], references: [id])
   items      OrderProduct[]
+  payments   Payment[]
 
   @@map("orders")
 }
@@ -35,11 +53,21 @@ model OrderProduct {
   quantity   Int      @map("quant")
   unitValue  Decimal  @db.Decimal(12, 2) @map("unit_value")
   totalValue Decimal  @db.Decimal(12, 2) @map("total_value")
-
-  product Product @relation(fields: [productId], references: [id])
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("order_products")
   @@index([orderId])
   @@index([productId])
+}
+
+model Payment {
+  id      Int      @id @default(autoincrement())
+  orderId Int
+  method  String // ex: 'credit_card', 'pix'
+  amount  Decimal  @db.Decimal(12, 2)
+  success Boolean
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }
