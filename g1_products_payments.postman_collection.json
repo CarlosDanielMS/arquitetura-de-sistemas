@@ -1,0 +1,91 @@
+{
+  "info": {
+    "name": "G1 - Products & Payments",
+    "_postman_id": "12345678-abcd-efgh-ijkl-1234567890ab",
+    "description": "Collection para testar os microserviços Products e Payments",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Products Service",
+      "item": [
+        {
+          "name": "Listar Produtos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://localhost:3001/products", "protocol": "http", "host": ["localhost"], "port": "3001", "path": ["products"] }
+          }
+        },
+        {
+          "name": "Criar Produto",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mouse Gamer\",\n  \"price\": 199.90,\n  \"stock\": 10\n}"
+            },
+            "url": { "raw": "http://localhost:3001/products", "protocol": "http", "host": ["localhost"], "port": "3001", "path": ["products"] }
+          }
+        },
+        {
+          "name": "Buscar Produto por ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:3001/products/1", "protocol": "http", "host": ["localhost"], "port": "3001", "path": ["products", "1"] }
+          }
+        },
+        {
+          "name": "Atualizar Produto (sem estoque)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mouse Gamer RGB\",\n  \"price\": 229.90\n}"
+            },
+            "url": { "raw": "http://localhost:3001/products/1", "protocol": "http", "host": ["localhost"], "port": "3001", "path": ["products", "1"] }
+          }
+        },
+        {
+          "name": "Atualizar Estoque",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 20\n}"
+            },
+            "url": { "raw": "http://localhost:3001/products/1/estoque", "protocol": "http", "host": ["localhost"], "port": "3001", "path": ["products", "1", "estoque"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments Service",
+      "item": [
+        {
+          "name": "Criar Pagamento",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"amount\": 199.90\n}"
+            },
+            "url": { "raw": "http://localhost:3003/payments", "protocol": "http", "host": ["localhost"], "port": "3003", "path": ["payments"] }
+          }
+        },
+        {
+          "name": "Processar Pagamento",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:3003/payments/1/process", "protocol": "http", "host": ["localhost"], "port": "3003", "path": ["payments", "1", "process"] }
+          }
+        }
+      ]
+    }
+  ]
+}
