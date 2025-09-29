@@ -1,0 +1,26 @@
+{
+  "name": "payments-service",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:dev": "prisma migrate dev",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:seed": "node prisma/seed.js",
+    "db:reset": "prisma migrate reset --force"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "axios": "^1.7.2",
+    "express": "^4.21.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "nodemon": "^3.1.4"
+  }
+}
