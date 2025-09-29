@@ -233,3 +233,11 @@ docs/microservices_architecture_v2.png
 }
 ```
 
+pgAdmin: http://localhost:5050
+Server: users-db / products-db / payments-db
+user postgres, pass postgres
+
+mongo-express: http://localhost:8081
+Login: admin / admin123
+
+
