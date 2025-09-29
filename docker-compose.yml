@@ -115,7 +115,6 @@ services:
     networks: [app-network]
     ports:
       - "27017:27017"
-    # (opcional) healthcheck para o Mongo
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -126,7 +125,6 @@ services:
     build: ./orders-service
     container_name: orders-service
     environment:
-      # use SEMPRE env no código (ver nota abaixo)
       MONGO_URL: mongodb://orders-db:27017/orders
     depends_on:
       orders-db:
@@ -135,6 +133,42 @@ services:
       - "3002:3002"
     networks: [app-network]
 
+  # =====================
+  # DB UIs
+  # =====================
+
+  # pgAdmin (UI para PostgreSQL)
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - users-db
+      - products-db
+      - payments-db
+    networks: [app-network]
+
+  # mongo-express (UI para MongoDB)
+  mongo-express:
+    image: mongo-express:1
+    container_name: mongo-express
+    environment:
+      ME_CONFIG_MONGODB_SERVER: orders-db
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    depends_on:
+      - orders-db
+    ports:
+      - "8081:8081"
+    networks: [app-network]
+
+# =====================
+# Volumes & Network
+# =====================
 volumes:
   users_pgdata:
   products_pgdata:
