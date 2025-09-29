@@ -186,7 +186,7 @@ docs/microservices_architecture_v2.png
 
 ## 🏗️ Diagrama da Arquitetura
 
-![Microservices Architecture](./docs/microservices_architecture_v2.png)
+![Microservices Architecture](./docs/microservice.png)
 
 ---
 
@@ -232,3 +232,4 @@ docs/microservices_architecture_v2.png
   ]
 }
 ```
+
