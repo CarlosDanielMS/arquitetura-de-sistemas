@@ -137,7 +137,7 @@ services:
   # DB UIs
   # =====================
 
-  # pgAdmin (UI para PostgreSQL)
+  # pgAdmin (UI for PostgreSQL)
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: pgadmin
@@ -152,7 +152,7 @@ services:
       - payments-db
     networks: [app-network]
 
-  # mongo-express (UI para MongoDB)
+  # mongo-express (UI for MongoDB)
   mongo-express:
     image: mongo-express:1
     container_name: mongo-express
