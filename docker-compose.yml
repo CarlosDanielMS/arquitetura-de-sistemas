@@ -1,0 +1,212 @@
+
+services:
+  # ========================
+  # 🗄️  PostgreSQL Databases
+  # ========================
+  postgres-products:
+    image: postgres:15
+    container_name: postgres_products
+    restart: always
+    environment:
+      POSTGRES_USER: products_user
+      POSTGRES_PASSWORD: prod_s3cret_!A9
+      POSTGRES_DB: products_db
+    volumes:
+      - products_pgdata:/var/lib/postgresql/data
+    networks: [ app-net ]
+    ports:
+      - "5433:5432"
+
+  postgres-users:
+    image: postgres:15
+    container_name: postgres_users
+    restart: always
+    environment:
+      POSTGRES_USER: users_user
+      POSTGRES_PASSWORD: usr_s3cret_!C8
+      POSTGRES_DB: users_db
+    volumes:
+      - users_pgdata:/var/lib/postgresql/data
+    networks: [ app-net ]
+    ports:
+      - "5435:5432"
+
+  postgres-payments:
+    image: postgres:15
+    container_name: postgres_payments
+    restart: always
+    environment:
+      POSTGRES_USER: payments_user
+      POSTGRES_PASSWORD: paym_s3cret_!B7
+      POSTGRES_DB: payments_db
+    volumes:
+      - payments_pgdata:/var/lib/postgresql/data
+    networks: [ app-net ]
+    ports:
+      - "5434:5432"
+
+  # ========================
+  # 🍃 MongoDB para Orders
+  # ========================
+  mongo-orders:
+    image: mongo:7
+    container_name: mongo_orders
+    restart: always
+    volumes:
+      - mongo_orders_data:/data/db
+    networks: [ app-net ]
+    ports:
+      - "27018:27017"
+
+  # ========================
+  # 💼 Microsserviços
+  # ========================
+
+  # ---------- PRODUCTS ----------
+  products:
+    build: ./products
+    container_name: ms_products
+    depends_on:
+      - postgres-products
+    environment:
+      DATABASE_URL: postgresql://products_user:prod_s3cret_!A9@postgres-products:5432/products_db
+      PORT: 3000
+    ports:
+      - "3001:3000"
+    networks: [ app-net ]
+    command: >
+      sh -c "sleep 10 && npx prisma db push && npm run start"
+
+  # ---------- USERS ----------
+  users:
+    build: ./users
+    container_name: ms_users
+    depends_on:
+      - postgres-users
+    environment:
+      DATABASE_URL: postgresql://users_user:usr_s3cret_!C8@postgres-users:5432/users_db
+      PORT: 3000
+      JWT_SECRET: super_secret_key_forza_users_!A1
+      TOKEN_EXPIRATION: 1h
+    ports:
+      - "3002:3000"
+    networks: [ app-net ]
+    command: >
+      sh -c "sleep 10 && npx prisma db push && npm run start"
+
+  # ---------- ORDERS ----------
+  orders:
+    build: ./orders
+    container_name: ms_orders
+    depends_on:
+      - mongo-orders
+      - products
+      - notification
+    environment:
+      MONGO_URI: mongodb://mongo-orders:27017/orders_db
+      PORT: 3000
+      PRODUCTS_SERVICE_URL: http://products:3000
+      NOTIFICATION_SERVICE_URL: http://notification:3000
+    ports:
+      - "3004:3000"
+    networks: [ app-net ]
+
+  # ---------- PAYMENTS ----------
+  payments:
+    build: ./payments
+    container_name: ms_payments
+    depends_on:
+      - postgres-payments
+      - orders
+      - notification
+    environment:
+      DATABASE_URL: postgresql://payments_user:paym_s3cret_!B7@postgres-payments:5432/payments_db
+      PORT: 3000
+      ORDERS_SERVICE_URL: http://orders:3000
+      NOTIFICATION_SERVICE_URL: http://notification:3000
+    ports:
+      - "3003:3000"
+    networks: [ app-net ]
+    command: >
+      sh -c "sleep 10 && npx prisma db push && npm run start"
+
+  # ---------- NOTIFICATION ----------
+  notification:
+    build: ./notification
+    container_name: ms_notification
+    depends_on:
+      - products
+    environment:
+      DATABASE_URL: file:./dev.db
+      PORT: 3000
+      SMTP_HOST: smtp.ethereal.email
+      SMTP_PORT: 587
+      SMTP_USER: forza.notify@example.com
+      SMTP_PASS: senha_teste
+    ports:
+      - "3005:3000"
+    networks: [ app-net ]
+    command: >
+      sh -c "sleep 5 && npx prisma db push && npm run start"
+
+# ========================
+  # 📈 InfluxDB para métricas/k6
+  # ========================
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    restart: always
+    networks: [ app-net ]
+    environment:
+      - INFLUXDB_DB=k6
+      - INFLUXDB_ADMIN_USER=k6admin
+      - INFLUXDB_ADMIN_PASSWORD=k6pass
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  # ========================
+  # 📊 Grafana para visualização
+  # ========================
+  grafana:
+    image: grafana/grafana:10.3.1
+    container_name: grafana
+    restart: always
+    networks: [ app-net ]
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=adminpass
+    ports:
+      - "3006:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - influxdb
+
+  # ========================
+  # 🏃 K6 - Performance Testing (sidecar/manual)
+  # ========================
+  k6:
+    image: grafana/k6:0.50.0
+    container_name: k6
+    networks: [ app-net ]
+    entrypoint: tail -f /dev/null
+    volumes:
+      - ./k6:/scripts
+    depends_on:
+      - influxdb
+    # You can override the entrypoint when running tests:
+    # docker compose run k6 run /scripts/your-script.js
+
+networks:
+  app-net:
+
+volumes:
+  products_pgdata:
+  users_pgdata:
+  payments_pgdata:
+  mongo_orders_data:
+  influxdb_data:
+  grafana_data:
