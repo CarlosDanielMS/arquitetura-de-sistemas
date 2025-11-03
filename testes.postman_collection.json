@@ -1,0 +1,298 @@
+{
+  "info": {
+    "_postman_id": "b58a1eac-2f0d-4dc5-934b-4cc4d38c5fb2",
+    "name": "Microservices - CRUD",
+    "description": "Coleção 100% funcional com bodies e tokens automáticos para todos os microsserviços (Users, Products, Orders, Payments, Notification).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "USERS",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cliente Teste\",\n  \"email\": \"cliente@teste.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_users}}/register",
+              "host": ["{{base_url_users}}"],
+              "path": ["register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cliente@teste.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_users}}/login",
+              "host": ["{{base_url_users}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User (/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{base_url_users}}/me",
+              "host": ["{{base_url_users}}"],
+              "path": ["me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PRODUCTS",
+      "item": [
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mouse Gamer\",\n  \"description\": \"Sensor óptico 16000 DPI\",\n  \"price\": 299.9,\n  \"stock\": 8\n}"
+            },
+            "url": {
+              "raw": "{{base_url_products}}/products",
+              "host": ["{{base_url_products}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "List All Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url_products}}/products",
+              "host": ["{{base_url_products}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url_products}}/products/{{product_id}}",
+              "host": ["{{base_url_products}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Product (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mouse Gamer Pro\",\n  \"description\": \"Atualizado com RGB\",\n  \"price\": 349.9,\n  \"stock\": 12\n}"
+            },
+            "url": {
+              "raw": "{{base_url_products}}/products/{{product_id}}",
+              "host": ["{{base_url_products}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Stock (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": -2\n}"
+            },
+            "url": {
+              "raw": "{{base_url_products}}/products/{{product_id}}/stock",
+              "host": ["{{base_url_products}}"],
+              "path": ["products", "{{product_id}}", "stock"]
+            }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url_products}}/products/{{product_id}}",
+              "host": ["{{base_url_products}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ORDERS",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{product_id}},\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url_orders}}/orders",
+              "host": ["{{base_url_orders}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "List Orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url_orders}}/orders",
+              "host": ["{{base_url_orders}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url_orders}}/orders/{{order_id}}",
+              "host": ["{{base_url_orders}}"],
+              "path": ["orders", "{{order_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Confirm Order",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url_orders}}/orders/{{order_id}}/confirm",
+              "host": ["{{base_url_orders}}"],
+              "path": ["orders", "{{order_id}}", "confirm"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url_orders}}/orders/{{order_id}}/cancel",
+              "host": ["{{base_url_orders}}"],
+              "path": ["orders", "{{order_id}}", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PAYMENTS",
+      "item": [
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"method\": \"PIX\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_payments}}/payments",
+              "host": ["{{base_url_payments}}"],
+              "path": ["payments"]
+            }
+          }
+        },
+        {
+          "name": "Process Payment (auto-random)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url_payments}}/payments/{{payment_id}}/process",
+              "host": ["{{base_url_payments}}"],
+              "path": ["payments", "{{payment_id}}", "process"]
+            }
+          }
+        },
+        {
+          "name": "List Payments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url_payments}}/payments",
+              "host": ["{{base_url_payments}}"],
+              "path": ["payments"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url_payments}}/payments/{{payment_id}}",
+              "host": ["{{base_url_payments}}"],
+              "path": ["payments", "{{payment_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "NOTIFICATION",
+      "item": [
+        {
+          "name": "Send Manual Notification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ORDER\",\n  \"recipient\": \"cliente@teste.com\",\n  \"subject\": \"Seu pedido foi confirmado\",\n  \"message\": \"O pedido foi confirmado e está a caminho!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_notification}}/notify",
+              "host": ["{{base_url_notification}}"],
+              "path": ["notify"]
+            }
+          }
+        },
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url_notification}}/notifications",
+              "host": ["{{base_url_notification}}"],
+              "path": ["notifications"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
