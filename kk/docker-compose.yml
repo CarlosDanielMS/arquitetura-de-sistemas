@@ -1,0 +1,131 @@
+services:
+  # === BANCO DE DADOS ===
+  orders-db:
+    image: mongo:6.0
+    container_name: orders_db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    volumes:
+      - orders_mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  payments-db:
+    image: postgres:15
+    container_name: payments_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: payments_db
+    volumes:
+      - payments_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+  # === SERVIÇOS ===
+  order-service:
+    build: ./order-service
+    container_name: orders_service
+    restart: always
+    ports:
+      - "3003:3000"
+    environment:
+      - DATABASE_URL=mongodb://orders-db:27017/orders_db
+    depends_on:
+      - orders-db
+
+  payment-service:
+    build: ./payment-service
+    container_name: payments_service
+    restart: always
+    ports:
+      - "3004:3000"
+    environment:
+      - DATABASE_URL=postgresql://admin:admin@payments-db:5432/payments_db
+      - ORDER_API_URL=http://order-service:3000
+    depends_on:
+      - payments-db
+      - order-service
+
+  # === INTERFACES DE ADMINISTRAÇÃO ===
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_ui
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - payments-db
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo_express_ui
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
+      ME_CONFIG_MONGODB_SERVER: orders-db
+      ME_CONFIG_MONGODB_AUTH_DATABASE: admin
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    depends_on:
+      - orders-db
+
+  # === INFRA DE MONITORAMENTO ===
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    restart: always
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+      - INFLUXDB_HTTP_AUTH_ENABLED=false
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+      - ./influxdb-init/init-influxdb.sh:/docker-entrypoint-initdb.d/init-influxdb.sh
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - influxdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  # === K6 ===
+  k6:
+    image: grafana/k6:latest
+    container_name: k6_runner
+    depends_on:
+      - payment-service
+      - order-service
+      - influxdb
+    volumes:
+      - ./k6-scripts:/scripts
+    entrypoint: ["k6"]
+    networks:
+      - default
+
+volumes:
+  orders_mongo_data:
+  payments_postgres_data:
+  pgadmin_data:
+  influxdb_data:
+  grafana_data:

@@ -10,6 +10,11 @@ const orderSchema = new mongoose.Schema(
       enum: ["PENDING", "APPROVED", "CANCELLED"],
       default: "PENDING",
     },
+    // --- Dados do Cliente Adicionados ---
+    userId: { type: String, required: true },
+    customerName: { type: String, required: true },
+    customerEmail: { type: String, required: true },
+    // ------------------------------------
   },
   { timestamps: true }
 );

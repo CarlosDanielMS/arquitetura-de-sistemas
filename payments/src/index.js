@@ -2,11 +2,63 @@ import express from "express";
 import axios from "axios";
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import amqplib from "amqplib"; // Importa o amqplib
 
 dotenv.config();
 const app = express();
 app.use(express.json());
 const prisma = new PrismaClient();
+
+// ============================================
+// 🐇 Conexão RabbitMQ
+// ============================================
+const RABBIT_URL = process.env.RABBITMQ_URL || "amqp://user:password@rabbitmq:5672";
+const QUEUE_NAME = "payment_notifications";
+let channel; // Canal de comunicação com o RabbitMQ
+
+/**
+ * Tenta conectar ao RabbitMQ com retentativas (loop).
+ * Só retorna (resolve) quando a conexão é bem-sucedida.
+ */
+async function connectRabbitMQ() {
+  let attempts = 0;
+  while (true) { // Loop infinito de retentativa
+    try {
+      attempts++;
+      console.log(`Attempt ${attempts} to connect to RabbitMQ...`);
+      
+      const conn = await amqplib.connect(RABBIT_URL);
+
+      // --- Adiciona listeners para saúde da conexão ---
+      conn.on("error", (err) => {
+        console.error("❌ RabbitMQ connection error", err.message);
+        channel = null; // Invalida o canal
+      });
+      conn.on("close", () => {
+        console.warn("RabbitMQ connection closed. Reconnecting...");
+        channel = null;
+        connectRabbitMQ(); // Tenta reconectar se a conexão cair
+      });
+      // ------------------------------------------------
+
+      channel = await conn.createChannel();
+      await channel.assertQueue(QUEUE_NAME, { durable: true });
+      
+      console.log("✅ Connected to RabbitMQ (Payments Producer)");
+      return; // Sucesso, sai do loop e da função
+
+    } catch (err) {
+      console.error(`❌ Failed to connect to RabbitMQ (Attempt ${attempts}):`, err.message);
+      if (attempts >= 10) { // Limite de 10 tentativas para evitar loop infinito no boot
+         console.error("Max connection attempts reached. Exiting.");
+         process.exit(1); // Falha o container (deixa o Docker reiniciar)
+      }
+      // Espera 5 segundos antes de tentar novamente
+      console.log("Retrying RabbitMQ connection in 5s...");
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+}
 
 // Health Check
 app.get("/", (req, res) => res.json({ message: "🚀 Payments service running" }));
@@ -71,25 +123,40 @@ app.post("/payments/:id/process", async (req, res) => {
 
     // Atualizar pedido de acordo com o resultado
     if (approved) {
-      await axios.patch(`${process.env.ORDERS_SERVICE_URL}/orders/${payment.orderId}/confirm`);
+      // 1. Confirma o pedido
+      const orderRes = await axios.patch(`${process.env.ORDERS_SERVICE_URL}/orders/${payment.orderId}/confirm`);
+      const order = orderRes.data; // O pedido agora contém customerName
 
-      // Notificação: pagamento aprovado
-      await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/notify`, {
-        type: "PAYMENT",
-        recipient: "financeiro@teste.com",
-        subject: "Pagamento aprovado ✅",
-        message: `O pagamento do pedido ${payment.orderId} foi aprovado e confirmado com sucesso.`,
-      });
+      // ----------------------------------------------------------------
+      // 🚀 ENVIAR EVENTO PARA RABBITMQ (PRODUCER)
+      // ----------------------------------------------------------------
+      if (channel) {
+        
+        // --- CORRIGIDO ---
+        // Usamos os dados do pedido (order) que foi retornado
+        const eventMessage = {
+          nomeCliente: order.customerName, // <--- Dado real do pedido
+          orderId: order._id,              // <--- ID real do pedido (Mongoose)
+          status: "APPROVED"
+        };
+        // -----------------
+
+        // Envia a mensagem para a fila como um Buffer
+        channel.sendToQueue(
+          QUEUE_NAME,
+          Buffer.from(JSON.stringify(eventMessage)),
+          { persistent: true } // Garante que a msg sobreviva a reinícios do RabbitMQ
+        );
+        console.log(`[x] Sent payment event for order ${payment.orderId}`);
+      } else {
+        console.error("❌ RabbitMQ channel not available. Message not sent.");
+        // Isso não deve acontecer agora, mas é uma boa prática manter
+        // Em um cenário real, poderíamos ter uma fila de "falha"
+      }
+      // ----------------------------------------------------------------
+
     } else {
       await axios.patch(`${process.env.ORDERS_SERVICE_URL}/orders/${payment.orderId}/cancel`);
-
-      // Notificação: pagamento recusado
-      await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/notify`, {
-        type: "PAYMENT",
-        recipient: "financeiro@teste.com",
-        subject: "Pagamento recusado ❌",
-        message: `O pagamento do pedido ${payment.orderId} foi recusado. O pedido foi cancelado.`,
-      });
     }
 
     res.json({
@@ -121,6 +188,18 @@ app.get("/payments/:id", async (req, res) => {
   res.json(payment);
 });
 
-app.listen(process.env.PORT || 3000, () =>
-  console.log(`Payments service running on port ${process.env.PORT || 3000}`)
-);
+/**
+ * Função de inicialização do servidor
+ */
+async function startServer() {
+  // 1. Conecta ao RabbitMQ PRIMEIRO
+  await connectRabbitMQ(); 
+
+  // 2. SÓ ENTÃO inicia o servidor Express
+  app.listen(process.env.PORT || 3000, () => {
+    console.log(`🚀 Payments service running on port ${process.env.PORT || 3000}`);
+  });
+}
+
+// Inicia o processo
+startServer();
