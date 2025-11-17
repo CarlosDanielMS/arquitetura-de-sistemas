@@ -1,4 +1,3 @@
-
 services:
   # ========================
   # 🗄️  PostgreSQL Databases
@@ -59,6 +58,21 @@ services:
       - "27018:27017"
 
   # ========================
+  # 🐇 RabbitMQ - Message Broker
+  # ========================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # Porta AMQP
+      - "15672:15672" # Interface de gerenciamento
+    networks: [ app-net ]
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+
+  # ========================
   # 💼 Microsserviços
   # ========================
 
@@ -102,11 +116,13 @@ services:
       - mongo-orders
       - products
       - notification
+      - users # <--- ADICIONADO
     environment:
       MONGO_URI: mongodb://mongo-orders:27017/orders_db
       PORT: 3000
       PRODUCTS_SERVICE_URL: http://products:3000
       NOTIFICATION_SERVICE_URL: http://notification:3000
+      USERS_SERVICE_URL: http://users:3000 # <--- ADICIONADO
     ports:
       - "3004:3000"
     networks: [ app-net ]
@@ -119,26 +135,30 @@ services:
       - postgres-payments
       - orders
       - notification
+      - rabbitmq
     environment:
       DATABASE_URL: postgresql://payments_user:paym_s3cret_!B7@postgres-payments:5432/payments_db
       PORT: 3000
       ORDERS_SERVICE_URL: http://orders:3000
       NOTIFICATION_SERVICE_URL: http://notification:3000
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672
     ports:
       - "3003:3000"
     networks: [ app-net ]
     command: >
       sh -c "sleep 10 && npx prisma db push && npm run start"
 
+
   # ---------- NOTIFICATION ----------
   notification:
     build: ./notification
     container_name: ms_notification
     depends_on:
-      - products
+      - rabbitmq # <--- ADICIONADO (products removido)
     environment:
       DATABASE_URL: file:./dev.db
       PORT: 3000
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672 # <--- ADICIONADO
       SMTP_HOST: smtp.ethereal.email
       SMTP_PORT: 587
       SMTP_USER: forza.notify@example.com
@@ -149,7 +169,7 @@ services:
     command: >
       sh -c "sleep 5 && npx prisma db push && npm run start"
 
-# ========================
+  # ========================
   # 📈 InfluxDB para métricas/k6
   # ========================
   influxdb:
