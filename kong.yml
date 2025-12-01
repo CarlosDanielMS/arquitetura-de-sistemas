@@ -1,334 +1,87 @@
-<<<<<<< HEAD
-_format_version: "2.1"
+_format_version: "3.0"
 _transform: true
 
-plugins:
-- name: rate-limiting
-  config:
-    minute: 10
-    policy: local
-  enabled: true
-  protocols: ["http", "https"]
-
-- name: request-size-limiting
-  config:
-    allowed_payload_size: 200
-    size_unit: kilobytes
-  enabled: true
-  protocols: ["http", "https"]
-
-- name: prometheus
-  enabled: true
-  protocols: ["http", "https"]
-
 services:
-- name: users-service
-  url: http://users:3000
-  routes:
-  - name: users-route
-    paths: ["/users"]
-    strip_path: true
-
-- name: products-service
-  url: http://products:3000
-  routes:
-  - name: products-route
-    paths: ["/products"]
-    strip_path: true
-
-- name: orders-service
-  url: http://orders:3000
-  routes:
-  - name: orders-route
-    paths: ["/orders"]
-    strip_path: true
-
-- name: payments-service
-  url: http://payments:3000
-  routes:
-  - name: payments-route
-    paths: ["/payments"]
-    strip_path: true
-=======
-_format_version: "3.0"
-
-services:
-  # ========================
-  # 📦 PRODUCTS SERVICE
-  # ========================
   - name: products-service
     url: http://products:3000
     routes:
-      - name: products-list
+      - name: products-route
         paths:
           - /products
+        strip_path: false
         methods:
           - GET
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: products-get-by-id
-        paths:
-          - /products/\d+
-        methods:
-          - GET
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: products-create
-        paths:
-          - /products
-        methods:
           - POST
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: products-update
-        paths:
-          - /products/\d+
-        methods:
           - PUT
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: products-update-stock
-        paths:
-          - /products/\d+/stock
-        methods:
-          - PATCH
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: products-delete
-        paths:
-          - /products/\d+
-        methods:
           - DELETE
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 10
+          policy: local
+      - name: request-size-limiting
+        config:
+          allowed_payload_size: 200
 
-  # ========================
-  # 👥 USERS SERVICE
-  # ========================
   - name: users-service
     url: http://users:3000
     routes:
-      - name: users-register
+      - name: users-route
         paths:
-          - /register
-        methods:
-          - POST
+          - /users
         strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: users-login
-        paths:
-          - /login
-        methods:
-          - POST
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: users-me
-        paths:
-          - /me
         methods:
           - GET
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
+          - POST
+          - PUT
+          - DELETE
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 10
+          policy: local
+      - name: request-size-limiting
+        config:
+          allowed_payload_size: 200
 
-  # ========================
-  # 📦 ORDERS SERVICE
-  # ========================
   - name: orders-service
     url: http://orders:3000
     routes:
-      - name: orders-create
+      - name: orders-route
         paths:
           - /orders
+        strip_path: false
         methods:
+          - GET
           - POST
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
+          - PUT
+          - DELETE
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 10
+          policy: local
+      - name: request-size-limiting
+        config:
+          allowed_payload_size: 200
 
-      - name: orders-list
-        paths:
-          - /orders
-        methods:
-          - GET
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: orders-get-by-id
-        paths:
-          - /orders/[a-zA-Z0-9]+
-        methods:
-          - GET
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: orders-update-status
-        paths:
-          - /orders/[a-zA-Z0-9]+/status
-        methods:
-          - PATCH
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-  # ========================
-  # 💳 PAYMENTS SERVICE
-  # ========================
   - name: payments-service
     url: http://payments:3000
     routes:
-      - name: payments-types
-        paths:
-          - /payments/types
-        methods:
-          - GET
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: payments-create
+      - name: payments-route
         paths:
           - /payments
+        strip_path: false
         methods:
+          - GET
           - POST
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: payments-list
-        paths:
-          - /payments
-        methods:
-          - GET
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
-
-      - name: payments-get-by-id
-        paths:
-          - /payments/\d+
-        methods:
-          - GET
-        strip_path: false
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 10
-              policy: local
-          - name: request-size-limiting
-            config:
-              allowed_payload_size: 200
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
+          - PUT
+          - DELETE
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 10
+          policy: local
+      - name: request-size-limiting
+        config:
+          allowed_payload_size: 200
