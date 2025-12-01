@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 version: '3.8'
 
-services:
-  # bancos
-  postgres-products:
-    image: postgres:15
-=======
 services:
   # ========================
   # 🗄️  PostgreSQL Databases
@@ -14,7 +8,6 @@ services:
     image: postgres:15
     container_name: postgres_products
     restart: always
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
     environment:
       POSTGRES_USER: products_user
       POSTGRES_PASSWORD: prod_s3cret_!A9
@@ -25,11 +18,8 @@ services:
 
   postgres-users:
     image: postgres:15
-<<<<<<< HEAD
-=======
     container_name: postgres_users
     restart: always
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
     environment:
       POSTGRES_USER: users_user
       POSTGRES_PASSWORD: usr_s3cret_!C8
@@ -40,11 +30,8 @@ services:
 
   postgres-payments:
     image: postgres:15
-<<<<<<< HEAD
-=======
     container_name: postgres_payments
     restart: always
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
     environment:
       POSTGRES_USER: payments_user
       POSTGRES_PASSWORD: paym_s3cret_!B7
@@ -53,10 +40,6 @@ services:
       - payments_pgdata:/var/lib/postgresql/data
     networks: [ app-net ]
 
-<<<<<<< HEAD
-  mongo-orders:
-    image: mongo:7
-=======
   # ========================
   # 🍃 MongoDB para Orders
   # ========================
@@ -64,14 +47,10 @@ services:
     image: mongo:7
     container_name: mongo_orders
     restart: always
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
     volumes:
       - mongo_orders_data:/data/db
     networks: [ app-net ]
 
-<<<<<<< HEAD
-  # serviços via kong
-=======
   # ========================
   # 🐇 RabbitMQ - Message Broker
   # ========================
@@ -80,7 +59,6 @@ services:
     container_name: rabbitmq
     restart: always
     ports:
-      - "5672:5672"
       - "15672:15672"
     networks: [ app-net ]
     environment:
@@ -109,195 +87,29 @@ services:
     depends_on:
       - redis-cache
     ports:
-      - "8081:8081"
+      - "8082:8081"
     environment:
       - REDIS_HOSTS=local:redis-cache:6379
     networks: [ app-net ]
 
   # ========================
-  # 💼 Microsserviços
+  # 🦍 Zookeeper para Kafka
   # ========================
-
-  # ---------- PRODUCTS ----------
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-  products:
-    build: ./products
-    container_name: ms_products
-    depends_on:
-      - postgres-products
-<<<<<<< HEAD
-    environment:
-      DATABASE_URL: postgresql://products_user:prod_s3cret_!A9@postgres-products:5432/products_db
-      PORT: 3000
-    networks: [ app-net ]
-    command: >
-      sh -c "
-        sleep 10 &&
-        npx prisma db push &&
-        node prisma/seed.js &&
-        npm run start
-      "
-
-=======
-      - redis-cache
-    environment:
-      DATABASE_URL: postgresql://products_user:prod_s3cret_!A9@postgres-products:5432/products_db
-      PORT: 3000
-      REDIS_HOST: redis-cache
-      REDIS_PORT: 6379
-    networks: [ app-net ]
-    command: >
-      sh -c "sleep 10 && npx prisma db push && npm run start"
-
-  # ---------- USERS ----------
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-  users:
-    build: ./users
-    container_name: ms_users
-    depends_on:
-      - postgres-users
-<<<<<<< HEAD
-=======
-      - redis-cache
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-    environment:
-      DATABASE_URL: postgresql://users_user:usr_s3cret_!C8@postgres-users:5432/users_db
-      PORT: 3000
-      JWT_SECRET: super_secret_key_forza_users_!A1
-<<<<<<< HEAD
-    networks: [ app-net ]
-    command: >
-      sh -c "
-        sleep 10 &&
-        npx prisma db push &&
-        node prisma/seed.js &&
-        npm run start
-      "
-
-=======
-      TOKEN_EXPIRATION: 1h
-      REDIS_HOST: redis-cache
-      REDIS_PORT: 6379
-    networks: [ app-net ]
-    command: >
-      sh -c "sleep 10 && npx prisma db push && npm run start"
-
-  # ---------- ORDERS ----------
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-  orders:
-    build: ./orders
-    container_name: ms_orders
-    depends_on:
-      - mongo-orders
-      - products
-<<<<<<< HEAD
-      - kafka
-=======
-      - notification
-      - users
-      - redis-cache
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-    environment:
-      MONGO_URI: mongodb://mongo-orders:27017/orders_db
-      PORT: 3000
-      PRODUCTS_SERVICE_URL: http://products:3000
-<<<<<<< HEAD
-      KAFKA_BROKER: kafka:9092
-    networks: [ app-net ]
-    command: >
-      sh -c "
-        sleep 10 &&
-        node seed.js &&
-        npm run start
-      "
-
-=======
-      NOTIFICATION_SERVICE_URL: http://notification:3000
-      USERS_SERVICE_URL: http://users:3000
-      REDIS_HOST: redis-cache
-      REDIS_PORT: 6379
-    networks: [ app-net ]
-
-  # ---------- PAYMENTS ----------
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-  payments:
-    build: ./payments
-    container_name: ms_payments
-    depends_on:
-      - postgres-payments
-<<<<<<< HEAD
-      - kafka
-      - orders
-=======
-      - orders
-      - notification
-      - rabbitmq
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-      - redis-cache
-    environment:
-      DATABASE_URL: postgresql://payments_user:paym_s3cret_!B7@postgres-payments:5432/payments_db
-      PORT: 3000
-<<<<<<< HEAD
-      KAFKA_BROKER: kafka:9092
-      ORDERS_SERVICE_URL: http://orders:3000
-      PRODUCTS_SERVICE_URL: http://products:3000
-=======
-      ORDERS_SERVICE_URL: http://orders:3000
-      NOTIFICATION_SERVICE_URL: http://notification:3000
-      RABBITMQ_URL: amqp://user:password@rabbitmq:5672
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-      REDIS_HOST: redis-cache
-      REDIS_PORT: 6379
-    networks: [ app-net ]
-    command: >
-<<<<<<< HEAD
-      sh -c "
-        sleep 10 &&
-        npx prisma db push &&
-        node prisma/seed.js &&
-        npm run start
-      "
-
-=======
-      sh -c "sleep 10 && npx prisma db push && npm run start"
-
-  # ---------- NOTIFICATION (INTERNAL ONLY) ----------
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-  notification:
-    build: ./notification
-    container_name: ms_notification
-    depends_on:
-<<<<<<< HEAD
-      - kafka
-    environment:
-      DATABASE_URL: file:./dev.db
-      PORT: 3000
-      KAFKA_BROKER: kafka:9092
-      SMTP_HOST: smtp.ethereal.email
-      SMTP_PORT: 587
-      SMTP_USER: teste@example.com
-      SMTP_PASS: 123
-    networks: [ app-net ]
-    command: >
-      sh -c "sleep 8 && npx prisma db push && npm run start"
-
-
-  # extras
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-    ports:
-      - "2181:2181"
     networks: [ app-net ]
 
+  # ========================
+  # 📨 Kafka - Message Streaming
+  # ========================
   kafka:
     image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
     depends_on:
       - zookeeper
-    ports:
-      - "9092:9092"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
@@ -307,8 +119,12 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     networks: [ app-net ]
 
+  # ========================
+  # 🎛️ Kafka UI
+  # ========================
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
+    container_name: kafka_ui
     depends_on:
       - kafka
     ports:
@@ -317,68 +133,113 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
     networks: [ app-net ]
 
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    depends_on:
-      - users
-      - products
-      - orders
-      - payments
-      - kong
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    networks: [ app-net ]
+  # ========================
+  # 💼 Microsserviços
+  # ========================
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
+  # ---------- PRODUCTS ----------
+  products:
+    build: ./products
+    container_name: ms_products
     depends_on:
-      - prometheus
-    ports:
-      - "3001:3000"
-    networks: [ app-net ]
-
-  redis-cache:
-    image: redis:7-alpine
-    container_name: redis_cache
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks: [ app-net ]
-
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    depends_on:
+      - postgres-products
       - redis-cache
-    ports:
-      - "8082:8081"
     environment:
-      - REDIS_HOSTS=local:redis-cache:6379
+      DATABASE_URL: postgresql://products_user:prod_s3cret_!A9@postgres-products:5432/products_db
+      PORT: 3000
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
     networks: [ app-net ]
+    command: >
+      sh -c "sleep 15 && npx prisma db push && npm run start"
 
-=======
+  # ---------- USERS ----------
+  users:
+    build: ./users
+    container_name: ms_users
+    depends_on:
+      - postgres-users
+      - redis-cache
+    environment:
+      DATABASE_URL: postgresql://users_user:usr_s3cret_!C8@postgres-users:5432/users_db
+      PORT: 3000
+      JWT_SECRET: super_secret_key_forza_users_!A1
+      TOKEN_EXPIRATION: 1h
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
+    networks: [ app-net ]
+    command: >
+      sh -c "sleep 15 && npx prisma db push && npm run start"
+
+  # ---------- NOTIFICATION (INTERNAL ONLY) ----------
+  notification:
+    build: ./notification
+    container_name: ms_notification
+    depends_on:
       - rabbitmq
+      - kafka
     environment:
       DATABASE_URL: file:./dev.db
       PORT: 3000
       RABBITMQ_URL: amqp://user:password@rabbitmq:5672
+      KAFKA_BROKER: kafka:9092
       SMTP_HOST: smtp.ethereal.email
       SMTP_PORT: 587
       SMTP_USER: forza.notify@example.com
       SMTP_PASS: senha_teste
     networks: [ app-net ]
     command: >
-      sh -c "sleep 5 && npx prisma db push && npm run start"
+      sh -c "sleep 10 && npx prisma db push && npm run start"
+
+  # ---------- ORDERS ----------
+  orders:
+    build: ./orders
+    container_name: ms_orders
+    depends_on:
+      - mongo-orders
+      - products
+      - notification
+      - users
+      - redis-cache
+    environment:
+      MONGO_URI: mongodb://mongo-orders:27017/orders_db
+      PORT: 3000
+      PRODUCTS_SERVICE_URL: http://products:3000
+      NOTIFICATION_SERVICE_URL: http://notification:3000
+      USERS_SERVICE_URL: http://users:3000
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
+    networks: [ app-net ]
+    command: >
+      sh -c "sleep 20 && npm run start"
+
+  # ---------- PAYMENTS ----------
+  payments:
+    build: ./payments
+    container_name: ms_payments
+    depends_on:
+      - postgres-payments
+      - orders
+      - notification
+      - rabbitmq
+      - redis-cache
+      - kafka
+    environment:
+      DATABASE_URL: postgresql://payments_user:paym_s3cret_!B7@postgres-payments:5432/payments_db
+      PORT: 3000
+      ORDERS_SERVICE_URL: http://orders:3000
+      NOTIFICATION_SERVICE_URL: http://notification:3000
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672
+      KAFKA_BROKER: kafka:9092
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
+    networks: [ app-net ]
+    command: >
+      sh -c "sleep 20 && npx prisma db push && npm run start"
 
   # ========================
   # 🦍 Kong API Gateway
   # ========================
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
   kong:
     image: kong:3.4
     container_name: kong_gateway
@@ -404,64 +265,6 @@ services:
       - "8001:8001"
     volumes:
       - ./kong.yml:/etc/kong/kong.yml:ro
-    networks: [ app-net ]
-
-<<<<<<< HEAD
-=======
-  # ========================
-  # 🎯 Konga - Kong Admin UI
-  # ========================
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-  konga:
-    image: pantsel/konga:latest
-    container_name: konga
-    restart: always
-    depends_on:
-      - kong
-    environment:
-<<<<<<< HEAD
-      - DB_ADAPTER=sqlite
-      - KONGA_HOOK_TIMEOUT=60000
-      - TOKEN_SECRET=some_secret_for_konga
-      - NODE_ENV=production
-      - KONGA_BACKEND_URL=http://kong:8001
-    ports:
-      - "1337:1337"
-    volumes:
-      - konga_data:/app/konga.db
-    networks: [ app-net ]
-
-volumes:
-  products_pgdata: {}
-  users_pgdata: {}
-  payments_pgdata: {}
-  mongo_orders_data: {}
-  redis_data: {}
-  konga_data: {}
-=======
-      - DB_ADAPTER=postgres
-      - DB_HOST=postgres-konga
-      - DB_PORT=5432
-      - DB_USER=konga
-      - DB_PASSWORD=konga_secret
-      - DB_DATABASE=konga_db
-      - KONGA_HOOK_TIMEOUT=60000
-      - TOKEN_SECRET=some_secret_for_konga
-      - NODE_ENV=production
-    ports:
-      - "1337:1337"
-    networks: [ app-net ]
-
-  postgres-konga:
-    image: postgres:15
-    container_name: postgres_konga
-    restart: always
-    environment:
-      POSTGRES_USER: konga
-      POSTGRES_PASSWORD: konga_secret
-      POSTGRES_DB: konga_db
-    volumes:
-      - konga_pgdata:/var/lib/postgresql/data
     networks: [ app-net ]
 
   # ========================
@@ -512,21 +315,16 @@ volumes:
       - ./k6-scripts:/scripts
     depends_on:
       - influxdb
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
 
 networks:
   app-net:
     driver: bridge
-<<<<<<< HEAD
-=======
 
 volumes:
   products_pgdata:
   users_pgdata:
   payments_pgdata:
-  konga_pgdata:
   mongo_orders_data:
   redis_data:
   influxdb_data:
   grafana_data:
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
