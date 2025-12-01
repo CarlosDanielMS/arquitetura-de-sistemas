@@ -13,8 +13,6 @@ services:
     volumes:
       - products_pgdata:/var/lib/postgresql/data
     networks: [ app-net ]
-    ports:
-      - "5433:5432"
 
   postgres-users:
     image: postgres:15
@@ -27,8 +25,6 @@ services:
     volumes:
       - users_pgdata:/var/lib/postgresql/data
     networks: [ app-net ]
-    ports:
-      - "5435:5432"
 
   postgres-payments:
     image: postgres:15
@@ -41,8 +37,6 @@ services:
     volumes:
       - payments_pgdata:/var/lib/postgresql/data
     networks: [ app-net ]
-    ports:
-      - "5434:5432"
 
   # ========================
   # 🍃 MongoDB para Orders
@@ -54,8 +48,6 @@ services:
     volumes:
       - mongo_orders_data:/data/db
     networks: [ app-net ]
-    ports:
-      - "27018:27017"
 
   # ========================
   # 🐇 RabbitMQ - Message Broker
@@ -65,12 +57,39 @@ services:
     container_name: rabbitmq
     restart: always
     ports:
-      - "5672:5672"   # Porta AMQP
-      - "15672:15672" # Interface de gerenciamento
+      - "5672:5672"
+      - "15672:15672"
     networks: [ app-net ]
     environment:
       - RABBITMQ_DEFAULT_USER=user
       - RABBITMQ_DEFAULT_PASS=password
+
+  # ========================
+  # 🔴 Redis - Cache
+  # ========================
+  redis-cache:
+    image: redis:7-alpine
+    container_name: redis_cache
+    restart: always
+    networks: [ app-net ]
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # ========================
+  # 🎨 Redis Commander - UI
+  # ========================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    restart: always
+    depends_on:
+      - redis-cache
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis-cache:6379
+    networks: [ app-net ]
 
   # ========================
   # 💼 Microsserviços
@@ -82,11 +101,12 @@ services:
     container_name: ms_products
     depends_on:
       - postgres-products
+      - redis-cache
     environment:
       DATABASE_URL: postgresql://products_user:prod_s3cret_!A9@postgres-products:5432/products_db
       PORT: 3000
-    ports:
-      - "3001:3000"
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
     networks: [ app-net ]
     command: >
       sh -c "sleep 10 && npx prisma db push && npm run start"
@@ -97,13 +117,14 @@ services:
     container_name: ms_users
     depends_on:
       - postgres-users
+      - redis-cache
     environment:
       DATABASE_URL: postgresql://users_user:usr_s3cret_!C8@postgres-users:5432/users_db
       PORT: 3000
       JWT_SECRET: super_secret_key_forza_users_!A1
       TOKEN_EXPIRATION: 1h
-    ports:
-      - "3002:3000"
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
     networks: [ app-net ]
     command: >
       sh -c "sleep 10 && npx prisma db push && npm run start"
@@ -116,15 +137,16 @@ services:
       - mongo-orders
       - products
       - notification
-      - users # <--- ADICIONADO
+      - users
+      - redis-cache
     environment:
       MONGO_URI: mongodb://mongo-orders:27017/orders_db
       PORT: 3000
       PRODUCTS_SERVICE_URL: http://products:3000
       NOTIFICATION_SERVICE_URL: http://notification:3000
-      USERS_SERVICE_URL: http://users:3000 # <--- ADICIONADO
-    ports:
-      - "3004:3000"
+      USERS_SERVICE_URL: http://users:3000
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
     networks: [ app-net ]
 
   # ---------- PAYMENTS ----------
@@ -136,38 +158,101 @@ services:
       - orders
       - notification
       - rabbitmq
+      - redis-cache
     environment:
       DATABASE_URL: postgresql://payments_user:paym_s3cret_!B7@postgres-payments:5432/payments_db
       PORT: 3000
       ORDERS_SERVICE_URL: http://orders:3000
       NOTIFICATION_SERVICE_URL: http://notification:3000
       RABBITMQ_URL: amqp://user:password@rabbitmq:5672
-    ports:
-      - "3003:3000"
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
     networks: [ app-net ]
     command: >
       sh -c "sleep 10 && npx prisma db push && npm run start"
 
-
-  # ---------- NOTIFICATION ----------
+  # ---------- NOTIFICATION (INTERNAL ONLY) ----------
   notification:
     build: ./notification
     container_name: ms_notification
     depends_on:
-      - rabbitmq # <--- ADICIONADO (products removido)
+      - rabbitmq
     environment:
       DATABASE_URL: file:./dev.db
       PORT: 3000
-      RABBITMQ_URL: amqp://user:password@rabbitmq:5672 # <--- ADICIONADO
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672
       SMTP_HOST: smtp.ethereal.email
       SMTP_PORT: 587
       SMTP_USER: forza.notify@example.com
       SMTP_PASS: senha_teste
-    ports:
-      - "3005:3000"
     networks: [ app-net ]
     command: >
       sh -c "sleep 5 && npx prisma db push && npm run start"
+
+  # ========================
+  # 🦍 Kong API Gateway
+  # ========================
+  kong:
+    image: kong:3.4
+    container_name: kong_gateway
+    restart: always
+    depends_on:
+      - redis-cache
+      - users
+      - products
+      - orders
+      - payments
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+      KONG_PROXY_LISTEN: "0.0.0.0:8000, 0.0.0.0:8443 ssl"
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+    volumes:
+      - ./kong.yml:/etc/kong/kong.yml:ro
+    networks: [ app-net ]
+
+  # ========================
+  # 🎯 Konga - Kong Admin UI
+  # ========================
+  konga:
+    image: pantsel/konga:latest
+    container_name: konga
+    restart: always
+    depends_on:
+      - kong
+    environment:
+      - DB_ADAPTER=postgres
+      - DB_HOST=postgres-konga
+      - DB_PORT=5432
+      - DB_USER=konga
+      - DB_PASSWORD=konga_secret
+      - DB_DATABASE=konga_db
+      - KONGA_HOOK_TIMEOUT=60000
+      - TOKEN_SECRET=some_secret_for_konga
+      - NODE_ENV=production
+    ports:
+      - "1337:1337"
+    networks: [ app-net ]
+
+  postgres-konga:
+    image: postgres:15
+    container_name: postgres_konga
+    restart: always
+    environment:
+      POSTGRES_USER: konga
+      POSTGRES_PASSWORD: konga_secret
+      POSTGRES_DB: konga_db
+    volumes:
+      - konga_pgdata:/var/lib/postgresql/data
+    networks: [ app-net ]
 
   # ========================
   # 📈 InfluxDB para métricas/k6
@@ -206,7 +291,7 @@ services:
       - influxdb
 
   # ========================
-  # 🏃 K6 - Performance Testing (sidecar/manual)
+  # 🏃 K6 - Performance Testing
   # ========================
   k6:
     image: grafana/k6:0.50.0
@@ -214,19 +299,20 @@ services:
     networks: [ app-net ]
     entrypoint: tail -f /dev/null
     volumes:
-      - ./k6:/scripts
+      - ./k6-scripts:/scripts
     depends_on:
       - influxdb
-    # You can override the entrypoint when running tests:
-    # docker compose run k6 run /scripts/your-script.js
 
 networks:
   app-net:
+    driver: bridge
 
 volumes:
   products_pgdata:
   users_pgdata:
   payments_pgdata:
+  konga_pgdata:
   mongo_orders_data:
+  redis_data:
   influxdb_data:
   grafana_data:
