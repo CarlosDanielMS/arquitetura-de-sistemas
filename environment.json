@@ -1,0 +1,11 @@
+{
+  "id": "ecommerce-env",
+  "name": "Ecommerce Local",
+  "_postman_variable_scope": "environment",
+  "values": [
+    { "key": "baseUrl", "value": "http://localhost:8000", "enabled": true },
+    { "key": "userId", "value": "1", "enabled": true },
+    { "key": "productId", "value": "1", "enabled": true },
+    { "key": "orderIdMongo", "value": "REPLACE_WITH_VALID_ORDER_ID", "enabled": true }
+  ]
+}

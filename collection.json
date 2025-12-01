@@ -1,0 +1,99 @@
+{
+  "info": {
+    "name": "Ecommerce API via Kong",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "ecommerce-collection"
+  },
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{"key":"Content-Type","value":"application/json"}],
+            "url": {"raw": "{{baseUrl}}/users/register","host":["{{baseUrl}}"],"path":["users","register"]},
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana Silva\",\n  \"email\": \"ana.silva@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {"method":"GET","url":{"raw":"{{baseUrl}}/users/users","host":["{{baseUrl}}"],"path":["users","users"]}}
+        },
+        {
+          "name": "Get User by ID",
+          "request": {"method":"GET","url":{"raw":"{{baseUrl}}/users/users/{{userId}}","host":["{{baseUrl}}"],"path":["users","users","{{userId}}"]}}
+        },
+        {
+          "name": "Delete User",
+          "request": {"method":"DELETE","url":{"raw":"{{baseUrl}}/users/users/{{userId}}","host":["{{baseUrl}}"],"path":["users","users","{{userId}}"]}}
+        },
+        {
+          "name": "Users Metrics",
+          "request": {"method":"GET","url":{"raw":"{{baseUrl}}/users/metrics","host":["{{baseUrl}}"],"path":["users","metrics"]}}
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{"key":"Content-Type","value":"application/json"}],
+            "url": {"raw": "{{baseUrl}}/products/products","host":["{{baseUrl}}"],"path":["products","products"]},
+            "body": {"mode":"raw","raw":"{\n  \"name\": \"Notebook Pro\",\n  \"description\": \"14\",\n  \"price\": 5999.90,\n  \"stock\": 25\n}"}
+          }
+        },
+        {"name":"List Products","request":{"method":"GET","url":{"raw":"{{baseUrl}}/products/products","host":["{{baseUrl}}"],"path":["products","products"]}}},
+        {"name":"Get Product","request":{"method":"GET","url":{"raw":"{{baseUrl}}/products/products/{{productId}}","host":["{{baseUrl}}"],"path":["products","products","{{productId}}"]}}},
+        {
+          "name": "Update Stock",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key":"Content-Type","value":"application/json"}],
+            "url": {"raw":"{{baseUrl}}/products/products/{{productId}}/stock","host":["{{baseUrl}}"],"path":["products","products","{{productId}}","stock"]},
+            "body": {"mode":"raw","raw":"{\n  \"quantity\": 2\n}"}
+          }
+        },
+        {"name":"Delete Product","request":{"method":"DELETE","url":{"raw":"{{baseUrl}}/products/products/{{productId}}","host":["{{baseUrl}}"],"path":["products","products","{{productId}}"]}}},
+        {"name":"Products Metrics","request":{"method":"GET","url":{"raw":"{{baseUrl}}/products/metrics","host":["{{baseUrl}}"],"path":["products","metrics"]}}}
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [{"key":"Content-Type","value":"application/json"}],
+            "url": {"raw": "{{baseUrl}}/orders/orders","host":["{{baseUrl}}"],"path":["orders","orders"]},
+            "body": {"mode":"raw","raw":"{\n  \"userId\": {{userId}},\n  \"productId\": {{productId}},\n  \"quantity\": 2\n}"}
+          }
+        },
+        {"name":"List Orders","request":{"method":"GET","url":{"raw":"{{baseUrl}}/orders/orders","host":["{{baseUrl}}"],"path":["orders","orders"]}}},
+        {"name":"Get Order","request":{"method":"GET","url":{"raw":"{{baseUrl}}/orders/orders/{{orderIdMongo}}","host":["{{baseUrl}}"],"path":["orders","orders","{{orderIdMongo}}"]}}},
+        {"name":"Orders Metrics","request":{"method":"GET","url":{"raw":"{{baseUrl}}/orders/metrics","host":["{{baseUrl}}"],"path":["orders","metrics"]}}}
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {"name":"List Payments","request":{"method":"GET","url":{"raw":"{{baseUrl}}/payments/payments","host":["{{baseUrl}}"],"path":["payments","payments"]}}},
+        {"name":"Get Payment","request":{"method":"GET","url":{"raw":"{{baseUrl}}/payments/payments/1","host":["{{baseUrl}}"],"path":["payments","payments","1"]}}},
+        {"name":"Payment Types","request":{"method":"GET","url":{"raw":"{{baseUrl}}/payments/payments/types","host":["{{baseUrl}}"],"path":["payments","payments","types"]}}},
+        {"name":"Payments Metrics","request":{"method":"GET","url":{"raw":"{{baseUrl}}/payments/metrics","host":["{{baseUrl}}"],"path":["payments","metrics"]}}}
+      ]
+    },
+    {
+      "name": "Kong Metrics",
+      "request": {"method":"GET","url":{"raw":"http://localhost:8001/metrics","host":["http://localhost"],"path":["8001","metrics"]}}
+    }
+  ]
+}

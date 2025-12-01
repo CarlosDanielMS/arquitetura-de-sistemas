@@ -1,0 +1,139 @@
+import express from "express";
+import { PrismaClient, PaymentStatus } from "@prisma/client";
+import { Kafka } from "kafkajs";
+import axios from "axios";
+import cache from "../cache.js";
+import client from "prom-client";
+
+const app = express();
+app.use(express.json());
+
+const prisma = new PrismaClient();
+const PORT = process.env.PORT || 3000;
+
+// kafka
+const kafka = new Kafka({
+  clientId: "payment-service",
+  brokers: ["kafka:9092"],
+  retry: { retries: 10 },
+});
+
+const consumer = kafka.consumer({
+  groupId: "payment-service-group",
+});
+
+const producer = kafka.producer();
+
+async function initKafkaConsumer() {
+  try {
+    await consumer.connect();
+    await consumer.subscribe({ topic: "orders-topic", fromBeginning: false });
+
+    console.log("[KAFKA] Conectado ao tópico orders-topic");
+
+    await producer.connect();
+
+    await consumer.run({
+      eachMessage: async ({ message }) => {
+        try {
+          const payload = JSON.parse(message.value.toString());
+          console.log("[KAFKA] Mensagem recebida:", payload);
+
+          const orderId = String(payload.orderId);
+          if (!orderId) return;
+
+          let userName = "Cliente";
+          try {
+            const userResponse = await axios.get(
+              `http://users:3000/users/${payload.userId}`
+            );
+            userName = userResponse.data.name;
+          } catch (err) {
+            console.error("[PAYMENTS] Falha ao buscar usuário:", err.message);
+          }
+
+          const saved = await prisma.payment.create({
+            data: {
+              orderId,
+              amount: Number(payload.totalPrice),
+              method: "AUTO",
+              status: PaymentStatus.PENDING,
+            },
+          });
+
+          console.log(`[KAFKA] Pagamento criado (PENDING) orderId=${orderId}`);
+
+          await producer.send({
+            topic: "notifications-topic",
+            messages: [
+              {
+                value: JSON.stringify({ orderId, customerName: userName }),
+              },
+            ],
+          });
+
+          console.log(
+            `[KAFKA] Evento enviado para notifications-topic: { orderId: ${orderId}, customerName: ${userName} }`
+          );
+        } catch (err) {
+          console.error("[KAFKA] Erro processando mensagem:", err.message);
+        }
+      },
+    });
+  } catch (err) {
+    console.error("[KAFKA] Falha ao iniciar consumer:", err.message);
+  }
+}
+
+// rotas
+app.get("/", (req, res) => {
+  res.json({ message: "Payments service running <3" });
+});
+
+app.post("/", (req, res) => {
+  res.status(200).send("OK");
+});
+
+app.get("/payments", async (req, res) => {
+  try {
+    const payments = await prisma.payment.findMany({
+      orderBy: { id: "desc" },
+    });
+    res.json(payments);
+  } catch {
+    res.status(500).json({ error: "Erro ao buscar pagamentos" });
+  }
+});
+
+// get types com cache infinito
+app.get("/payments/types", cache(Infinity), (req, res) => {
+  res.json(["CREDIT_CARD", "PIX", "BOLETO"]);
+});
+
+app.get("/payments/:id", async (req, res) => {
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { id: Number(req.params.id) },
+    });
+
+    if (!payment)
+      return res.status(404).json({ error: "Pagamento não encontrado" });
+
+    res.json(payment);
+  } catch {
+    res.status(500).json({ error: "Erro ao buscar pagamento" });
+  }
+});
+
+// metrics
+const register = new client.Registry();
+client.collectDefaultMetrics({ register, prefix: "payments_", timeout: 5000 });
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.send(await register.metrics());
+});
+
+app.listen(PORT, async () => {
+  console.log(`Payment-service rodando na porta ${PORT}`);
+  await initKafkaConsumer();
+});

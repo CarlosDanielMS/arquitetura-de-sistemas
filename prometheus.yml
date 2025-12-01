@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'users'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['users:3000']
+
+  - job_name: 'products'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['products:3000']
+
+  - job_name: 'orders'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['orders:3000']
+
+  - job_name: 'payments'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['payments:3000']
+
+  - job_name: 'kong'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['kong:8001']
