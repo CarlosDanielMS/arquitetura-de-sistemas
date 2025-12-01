@@ -2,6 +2,10 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 
 export const options = {
+<<<<<<< HEAD
+=======
+  // Usando as etapas de VU (Usuários Virtuais) do seu último script
+>>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
   stages: [
     { duration: "30s", target: 10 },   // aquecimento
     { duration: "1m", target: 100 },  // carga

@@ -16,6 +16,7 @@ export const options = {
 };
 
 export default function () {
+<<<<<<< HEAD
   const url = "http://payments:3000/payments";
   const res = http.get(url);
   check(res, {
@@ -25,4 +26,38 @@ export default function () {
     },
   });
   sleep(1);
+=======
+  const url = "http://payments:3000/payments";
+
+  // 1. O Payload (Corpo) CORRIGIDO
+  // -----------------------------------------------------------------
+  // !!! ATENÇÃO !!!
+  // Você DEVE substituir o valor "id-real..." por um ID
+  // que exista no seu banco 'mongo_orders' e tenha status 'PENDING'.
+  // Se não fizer isso, o teste falhará com HTTP 404.
+  // -----------------------------------------------------------------
+  const payload = JSON.stringify({
+    orderId: "69094642ebe9ff48dece5f46", // <--- COLOQUE SEU ID REAL AQUI
+    method: "credit_card",
+  });
+
+  // 2. Os Headers (Parâmetros)
+  const params = {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  // 3. A Requisição (Enviando payload e params)
+  const res = http.post(url, payload, params);
+
+  // 4. Os Checks (Verificações) CORRIGIDOS
+  // O status de sucesso para criar algo (POST) é 201
+  check(res, {
+    "resposta de criação OK (201)": (r) => r.status === 201,
+    "resposta contém um ID de pagamento": (r) => r.json("id") !== undefined,
+  });
+
+  sleep(1);
+>>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
 }
