@@ -1,15 +1,7 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 17a7a2dc88d99f0191af4242724caacc35e5ae2e
-FROM node:18
-
+FROM node:20-alpine
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm install
-
 COPY . .
-
 EXPOSE 3000
-CMD ["node", "src/index.js"]
+CMD ["npm", "start"]
